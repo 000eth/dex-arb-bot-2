@@ -132,6 +132,32 @@ async def main():
 
     await dp.start_polling(bot)
 
+from keyboards import (
+    main_menu, check_buttons, settings_menu,
+    symbol_menu, interval_menu, min_pnl_menu,
+    symbol_toggle_menu
+)
+@dp.callback_query(F.data == "set_symbols")
+async def cb_set_symbols(c: CallbackQuery):
+    await c.message.answer("Выбери монеты для мониторинга:", reply_markup=symbol_toggle_menu)
+    await c.answer()
+
+
+@dp.callback_query(F.data.startswith("toggle_"))
+async def cb_toggle_symbol(c: CallbackQuery):
+    symbol = c.data.split("_")[1]
+    cfg = get_user_settings(c.from_user.id)
+
+    if symbol in cfg["symbols"]:
+        cfg["symbols"].remove(symbol)
+        await c.message.answer(f"❌ {symbol} отключён")
+    else:
+        cfg["symbols"].append(symbol)
+        await c.message.answer(f"✅ {symbol} включён")
+
+    await c.answer()
+
+
 
 if __name__ == '__main__':
     asyncio.run(main())
