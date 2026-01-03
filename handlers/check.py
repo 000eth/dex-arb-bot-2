@@ -1,7 +1,10 @@
-from aiogram import types
+from aiogram import types, Router
+from logic.arbitrage import check_arbitrage
 from logic.exchange_links import get_exchange_link
 from logic.auto_monitor import get_user_settings
-from logic.arbitrage import check_arbitrage
+
+router = Router()
+
 
 # Экранируем MarkdownV2
 def esc(text: str) -> str:
@@ -10,10 +13,13 @@ def esc(text: str) -> str:
         text = text.replace(ch, f"\\{ch}")
     return text
 
+
 @router.message(commands=["check"])
 async def handle_check(message: types.Message):
     cfg = get_user_settings(message.from_user.id)
-    symbols = cfg.get("symbols", ["BTC"])  # по умолчанию BTC
+
+    # Если монеты не заданы — ставим BTC по умолчанию
+    symbols = cfg.get("symbols", ["BTC"])
 
     for symbol in symbols:
         result = await check_arbitrage(symbol)
