@@ -5,32 +5,44 @@ from exchanges.okx import get_price as okx_price
 import logging
 logger = logging.getLogger(__name__)
 
+
 async def check_arbitrage(symbol: str = "BTC"):
     prices = {}
+    errors = {}
 
     # Hyperliquid
     try:
         prices["Hyperliquid"] = await hl_price(symbol)
     except Exception as e:
+        errors["Hyperliquid"] = str(e)
         logger.warning(f"Hyperliquid error: {e}")
 
     # Binance
     try:
         prices["Binance"] = await binance_price(symbol)
     except Exception as e:
+        errors["Binance"] = str(e)
         logger.warning(f"Binance error: {e}")
 
     # OKX
     try:
         prices["OKX"] = await okx_price(symbol)
     except Exception as e:
+        errors["OKX"] = str(e)
         logger.warning(f"OKX error: {e}")
 
-    # Если нет хотя бы двух цен — арбитраж невозможен
+    # Очищаем только валидные цены
     clean = {ex: p for ex, p in prices.items() if p is not None}
 
+    # Если нет хотя бы двух цен — возвращаем подробную ошибку
     if len(clean) < 2:
-        return {"error": "Недостаточно данных для арбитража"}
+        return {
+            "error": "Недостаточно данных для арбитража",
+            "details": {
+                "prices": prices,
+                "errors": errors
+            }
+        }
 
     # Ищем лучшую покупку и лучшую продажу
     long_ex = min(clean, key=clean.get)
@@ -47,5 +59,6 @@ async def check_arbitrage(symbol: str = "BTC"):
         "long_price": long_price,
         "short_price": short_price,
         "pnl": pnl,
-        "all_prices": clean
+        "all_prices": clean,
+        "errors": errors
     }
