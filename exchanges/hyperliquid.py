@@ -12,12 +12,11 @@ async def get_price(symbol: str) -> float:
         async with session.post(url, json=payload) as resp:
             data = await resp.json()
 
-    # Hyperliquid возвращает список, а не словарь
-    for item in data:
-        if item.get("type") == "metaAndAssetCtxs":
-            assets = item.get("assetCtxs", [])
-            for asset in assets:
-                if asset["name"].upper() == symbol.upper():
-                    return float(asset["markPx"])
+    # Hyperliquid возвращает список, берём первый элемент
+    if isinstance(data, list) and len(data) > 0:
+        assets = data[0].get("assetCtxs", [])
+        for asset in assets:
+            if asset["name"].upper() == symbol.upper():
+                return float(asset["markPx"])
 
     raise ValueError(f"Symbol {symbol} not found on Hyperliquid")
