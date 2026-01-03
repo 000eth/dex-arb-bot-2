@@ -44,14 +44,14 @@ async def cb_toggle_symbol(callback: types.CallbackQuery):
     else:
         cfg["symbols"].append(symbol)
 
-    # Генерируем обновлённое меню
+    # Обновляем меню
     menu = build_symbol_menu(cfg["symbols"])
 
     await callback.message.edit_text(
         "Выбери монеты для мониторинга:",
         reply_markup=menu
     )
-    await callback.answer()
+    await callback.answer(f"{symbol} переключён")
 
 
 # === Меню интервала ===
@@ -100,6 +100,22 @@ async def cb_pnl(callback: types.CallbackQuery):
         reply_markup=settings_menu
     )
     await callback.answer()
+
+
+# === Включение / выключение авто‑мониторинга ===
+@router.callback_query(F.data == "toggle_auto")
+async def cb_toggle_auto(callback: types.CallbackQuery):
+    cfg = get_user_settings(callback.from_user.id)
+
+    cfg["enabled"] = not cfg["enabled"]
+    status = "Включён" if cfg["enabled"] else "Выключен"
+
+    await callback.message.edit_text(
+        f"⚙ Настройки:\nАвто‑мониторинг: *{status}*",
+        reply_markup=settings_menu,
+        parse_mode="Markdown"
+    )
+    await callback.answer(f"Авто‑мониторинг: {status}")
 
 
 # === Кнопка "Назад" ===
