@@ -1,24 +1,40 @@
 import aiohttp
+import logging
 
-BASE_URL = "https://www.okx.com/api/v5/market/ticker"
+logger = logging.getLogger(__name__)
 
-async def get_price(symbol: str) -> float:
+BASE_URL = "https://www.okx.com"
+
+
+async def get_price(symbol: str):
     """
-    Получает среднюю цену (mid price) с OKX.
-    symbol: 'BTC', 'ETH', 'SOL' и т.д.
+    Получает цену с OKX для фьючерса USDT-SWAP.
+    Пример инструмента: BTC-USDT-SWAP, ETH-USDT-SWAP, SOL-USDT-SWAP
     """
-    url = f"{BASE_URL}?instId={symbol.upper()}-USDT-SWAP"
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
+    instrument = f"{symbol}-USDT-SWAP"
+    url = f"{BASE_URL}/api/v5/market/ticker?instId={instrument}"
 
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=5) as resp:
+                data = await resp.json()
+
+    except Exception as e:
+        logger.warning(f"OKX request error: {e}")
+        return None
+
+    # Проверяем формат ответа
     if "data" not in data or not data["data"]:
-        raise ValueError(f"OKX error: {data}")
+        logger.warning(f"OKX empty response for {instrument}: {data}")
+        return None
 
-    ticker = data["data"][0]
+    item = data["data"][0]
 
-    bid = float(ticker["bidPx"])
-    ask = float(ticker["askPx"])
-
-    return (bid + ask) / 2
+    # OKX возвращает цену как строку
+    try:
+        price = float(item["last"])
+        return price
+    except Exception as e:
+        logger.warning(f"OKX parse error for {instrument}: {e}")
+        return None
