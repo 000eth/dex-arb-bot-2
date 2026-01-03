@@ -17,9 +17,7 @@ async def settings_cmd(message: types.Message):
 # === Открытие меню выбора монет ===
 @router.callback_query(F.data == "set_symbols")
 async def cb_set_symbols(callback: types.CallbackQuery):
-    await callback.message.edit_text(
-        "Выбери монеты для мониторинга:"
-    )
+    await callback.message.edit_text("Выбери монеты для мониторинга:")
     await callback.message.edit_reply_markup(symbol_toggle_menu)
     await callback.answer()
 
@@ -35,7 +33,7 @@ async def cb_toggle_symbol(callback: types.CallbackQuery):
     else:
         cfg["symbols"].append(symbol)
 
-    # Обновляем меню без отправки нового сообщения
+    # Обновляем меню без создания нового сообщения
     await callback.message.edit_reply_markup(symbol_toggle_menu)
     await callback.answer(f"{symbol} переключён")
 
@@ -76,5 +74,13 @@ async def cb_pnl(callback: types.CallbackQuery):
     cfg["min_pnl"] = pnl
 
     await callback.message.edit_text(f"Минимальный PnL установлен: {pnl}$")
+    await callback.message.edit_reply_markup(settings_menu)
+    await callback.answer()
+
+
+# === Кнопка "Назад" ===
+@router.callback_query(F.data == "back_settings")
+async def cb_back(callback: types.CallbackQuery):
+    await callback.message.edit_text("⚙ Настройки:")
     await callback.message.edit_reply_markup(settings_menu)
     await callback.answer()
