@@ -1,55 +1,48 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from logic.exchange_links import get_exchange_link
-from logic.auto_monitor import get_user_settings
 
 
 @router.message(commands=["check"])
 async def handle_check(message: types.Message):
-    cfg = get_user_settings(message.from_user.id)
+    result = await check_arbitrage("ETH")
 
-    # Если монеты не заданы — ставим BTC по умолчанию
-    symbols = cfg.get("symbols", ["BTC"])
+    if "error" in result:
+        await message.answer("⚠️ Не удалось получить данные с бирж.")
+        return
 
-    for symbol in symbols:
-        result = await check_arbitrage(symbol)
+    long_ex = result["long"]
+    short_ex = result["short"]
+    long_price = result["long_price"]
+    short_price = result["short_price"]
+    pnl = result["pnl"]
 
-        if "error" in result:
-            await message.answer(f"⚠️ Не удалось получить данные по {symbol}.")
-            continue
+    text = (
+        f"📊 *Арбитраж по ETH:*\n"
+        f"🟢 Long: *{long_ex}* @ `{long_price}`\n"
+        f"🔴 Short: *{short_ex}* @ `{short_price}`\n"
+        f"💰 PnL: *{pnl}$*\n"
+    )
 
-        long_ex = result["long"]
-        short_ex = result["short"]
-        long_price = result["long_price"]
-        short_price = result["short_price"]
-        pnl = result["pnl"]
-
-        text = (
-            f"📊 *Арбитраж по {symbol}:*\n"
-            f"🟢 Long: *{long_ex}* @ `{long_price}`\n"
-            f"🔴 Short: *{short_ex}* @ `{short_price}`\n"
-            f"💰 PnL: *{pnl}$*\n"
-        )
-
-        # === Кнопки со ссылками на биржи ===
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text=f"🟢 {long_ex}",
-                        url=get_exchange_link(long_ex, symbol)
-                    ),
-                    InlineKeyboardButton(
-                        text=f"🔴 {short_ex}",
-                        url=get_exchange_link(short_ex, symbol)
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="🔄 Проверить снова",
-                        callback_data="check_again"
-                    )
-                ]
+    # === Кнопки со ссылками ===
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"🟢 {long_ex}",
+                    url=get_exchange_link(long_ex, "ETH")
+                ),
+                InlineKeyboardButton(
+                    text=f"🔴 {short_ex}",
+                    url=get_exchange_link(short_ex, "ETH")
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="🔄 Проверить снова",
+                    callback_data="check_again"
+                )
             ]
-        )
+        ]
+    )
 
-        await message.answer(text, parse_mode="Markdown", reply_markup=kb)
+    await message.answer(text, parse_mode="Markdown", reply_markup=kb)
