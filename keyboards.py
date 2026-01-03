@@ -3,7 +3,10 @@ from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton
 )
 
+# ============================
 # Главное меню
+# ============================
+
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="/check")],
@@ -13,7 +16,10 @@ main_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# ============================
 # Кнопки под сообщением /check
+# ============================
+
 check_buttons = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="🔄 Проверить снова", callback_data="check_again")],
@@ -25,47 +31,23 @@ check_buttons = InlineKeyboardMarkup(
     ]
 )
 
+# ============================
 # Меню настроек
+# ============================
+
 settings_menu = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Монета", callback_data="set_symbol")],
+        [InlineKeyboardButton(text="Монеты", callback_data="set_symbols")],
         [InlineKeyboardButton(text="Интервал", callback_data="set_interval")],
         [InlineKeyboardButton(text="Минимальный PnL", callback_data="set_min_pnl")],
         [InlineKeyboardButton(text="⬅ Назад", callback_data="back_main")]
     ]
 )
 
-# Выбор монеты
-symbol_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="BTC", callback_data="symbol_BTC")],
-        [InlineKeyboardButton(text="ETH", callback_data="symbol_ETH")],
-        [InlineKeyboardButton(text="SOL", callback_data="symbol_SOL")],
-        [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
-    ]
-)
+# ============================
+# Меню выбора монет (вкл/выкл)
+# ============================
 
-# Выбор интервала
-interval_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="1 сек", callback_data="interval_1")],
-        [InlineKeyboardButton(text="3 сек", callback_data="interval_3")],
-        [InlineKeyboardButton(text="5 сек", callback_data="interval_5")],
-        [InlineKeyboardButton(text="10 сек", callback_data="interval_10")],
-        [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
-    ]
-)
-
-# Выбор минимального PnL
-min_pnl_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="1$", callback_data="pnl_1")],
-        [InlineKeyboardButton(text="3$", callback_data="pnl_3")],
-        [InlineKeyboardButton(text="5$", callback_data="pnl_5")],
-        [InlineKeyboardButton(text="10$", callback_data="pnl_10")],
-        [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
-    ]
-)
 symbol_toggle_menu = InlineKeyboardMarkup(
     inline_keyboard=[
         [
@@ -78,12 +60,31 @@ symbol_toggle_menu = InlineKeyboardMarkup(
         ]
     ]
 )
-settings_menu = InlineKeyboardMarkup(
+
+# ============================
+# Меню выбора интервала
+# ============================
+
+interval_menu = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Монеты", callback_data="set_symbols")],
-        [InlineKeyboardButton(text="Интервал", callback_data="set_interval")],
-        [InlineKeyboardButton(text="Минимальный PnL", callback_data="set_min_pnl")],
-        [InlineKeyboardButton(text="⬅ Назад", callback_data="back_main")]
+        [InlineKeyboardButton(text="1 сек", callback_data="interval_1")],
+        [InlineKeyboardButton(text="3 сек", callback_data="interval_3")],
+        [InlineKeyboardButton(text="5 сек", callback_data="interval_5")],
+        [InlineKeyboardButton(text="10 сек", callback_data="interval_10")],
+        [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
     ]
 )
 
+# ============================
+# Меню выбора минимального PnL
+# ============================
+
+min_pnl_menu = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="1$", callback_data="pnl_1")],
+        [InlineKeyboardButton(text="3$", callback_data="pnl_3")],
+        [InlineKeyboardButton(text="5$", callback_data="pnl_5")],
+        [InlineKeyboardButton(text="10$", callback_data="pnl_10")],
+        [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
+    ]
+)
