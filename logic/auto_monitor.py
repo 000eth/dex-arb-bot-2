@@ -9,8 +9,8 @@ def get_user_settings(uid):
             "enabled": False,
             "interval": 5,
             "min_pnl": 1,
-            "symbols": ["BTC"],
-            "last_pnl": {},
+            "symbols": ["BTC"],   # список монет
+            "last_pnl": {},       # pnl по каждой монете
             "next_check": 0
         }
     return user_settings[uid]
