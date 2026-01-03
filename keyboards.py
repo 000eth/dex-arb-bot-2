@@ -1,5 +1,7 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton,
+    InlineKeyboardMarkup, InlineKeyboardButton
+)
 
 # === ГЛАВНОЕ МЕНЮ (кнопки без слешей) ===
 main_menu = ReplyKeyboardMarkup(
@@ -10,6 +12,7 @@ main_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+
 # === МЕНЮ НАСТРОЕК ===
 settings_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Монеты", callback_data="set_symbols")],
@@ -17,17 +20,23 @@ settings_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Минимальный PnL", callback_data="set_min_pnl")],
 ])
 
-# === МЕНЮ ВЫБОРА МОНЕТ ===
-symbol_toggle_menu = InlineKeyboardMarkup(inline_keyboard=[
-    [
-        InlineKeyboardButton(text="BTC", callback_data="toggle_BTC"),
-        InlineKeyboardButton(text="ETH", callback_data="toggle_ETH"),
-    ],
-    [
-        InlineKeyboardButton(text="SOL", callback_data="toggle_SOL"),
-        InlineKeyboardButton(text="Назад", callback_data="back_settings")
+
+# === ДИНАМИЧЕСКОЕ МЕНЮ ВЫБОРА МОНЕТ (✔/✖) ===
+def build_symbol_menu(selected: list[str]) -> InlineKeyboardMarkup:
+    def btn(symbol: str):
+        mark = "✔" if symbol in selected else "✖"
+        return InlineKeyboardButton(
+            text=f"{symbol} {mark}",
+            callback_data=f"toggle_{symbol}"
+        )
+
+    keyboard = [
+        [btn("BTC"), btn("ETH")],
+        [btn("SOL"), InlineKeyboardButton(text="Назад", callback_data="back_settings")]
     ]
-])
+
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
 
 # === МЕНЮ ИНТЕРВАЛОВ ===
 interval_menu = InlineKeyboardMarkup(inline_keyboard=[
@@ -40,6 +49,7 @@ interval_menu = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(text="Назад", callback_data="back_settings")
     ]
 ])
+
 
 # === МЕНЮ МИНИМАЛЬНОГО PnL ===
 min_pnl_menu = InlineKeyboardMarkup(inline_keyboard=[
