@@ -4,11 +4,12 @@ logging.basicConfig(level=logging.INFO)
 import asyncio
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from config import settings
 from logic.arbitrage import check_arbitrage
 from logic.auto_monitor import auto_monitor_loop, get_user_settings
+from logic.exchange_links import get_exchange_link
 
 from keyboards import (
     main_menu, check_buttons, settings_menu,
@@ -16,16 +17,44 @@ from keyboards import (
 )
 
 
+# === Клавиатура с ссылками на биржи ===
+def build_result_keyboard(long_ex, short_ex, symbol):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"🟢 {long_ex}",
+                    url=get_exchange_link(long_ex, symbol)
+                ),
+                InlineKeyboardButton(
+                    text=f"🔴 {short_ex}",
+                    url=get_exchange_link(short_ex, symbol)
+                )
+            ],
+            [
+                InlineKeyboardButton(text="🔄 Проверить снова", callback_data="check_again")
+            ]
+        ]
+    )
+
+
 async def main():
     bot = Bot(settings.BOT_TOKEN)
     dp = Dispatcher()
 
+    # Запускаем авто‑мониторинг
     asyncio.create_task(auto_monitor_loop(bot))
 
+    # ============================
+    # Команда /start
+    # ============================
     @dp.message(Command("start"))
     async def start(m: Message):
         await m.answer("Бот запущен. Выбирай действие:", reply_markup=main_menu)
 
+    # ============================
+    # Команда /check
+    # ============================
     @dp.message(Command("check"))
     async def check(m: Message):
         cfg = get_user_settings(m.from_user.id)
@@ -44,14 +73,21 @@ async def main():
                 f"💰 PnL: *{result['pnl']}$*\n"
             )
 
-            await m.answer(text, parse_mode="Markdown", reply_markup=check_buttons)
+            kb = build_result_keyboard(result["long"], result["short"], symbol)
+            await m.answer(text, parse_mode="Markdown", reply_markup=kb)
 
+    # ============================
+    # Команда /settings
+    # ============================
     @dp.message(Command("settings"))
     async def settings_cmd(m: Message):
         await m.answer("⚙ Настройки:", reply_markup=settings_menu)
 
-    # === CALLBACKS ===
+    # ============================
+    # CALLBACKS
+    # ============================
 
+    # Повторная проверка
     @dp.callback_query(F.data == "check_again")
     async def cb_check_again(c: CallbackQuery):
         cfg = get_user_settings(c.from_user.id)
@@ -70,10 +106,12 @@ async def main():
                 f"💰 PnL: *{result['pnl']}$*\n"
             )
 
-            await c.message.answer(text, parse_mode="Markdown", reply_markup=check_buttons)
+            kb = build_result_keyboard(result["long"], result["short"], symbol)
+            await c.message.answer(text, parse_mode="Markdown", reply_markup=kb)
 
         await c.answer()
 
+    # Авто ON
     @dp.callback_query(F.data == "auto_on")
     async def cb_auto_on(c: CallbackQuery):
         cfg = get_user_settings(c.from_user.id)
@@ -81,6 +119,7 @@ async def main():
         await c.message.answer("🟢 Авто‑мониторинг включён.")
         await c.answer()
 
+    # Авто OFF
     @dp.callback_query(F.data == "auto_off")
     async def cb_auto_off(c: CallbackQuery):
         cfg = get_user_settings(c.from_user.id)
@@ -88,6 +127,7 @@ async def main():
         await c.message.answer("🔴 Авто‑мониторинг выключен.")
         await c.answer()
 
+    # Открыть настройки
     @dp.callback_query(F.data == "open_settings")
     async def cb_open_settings(c: CallbackQuery):
         await c.message.answer("⚙ Настройки:", reply_markup=settings_menu)
@@ -141,11 +181,15 @@ async def main():
         await c.message.answer(f"Минимальный PnL установлен: {pnl}$")
         await c.answer()
 
+    # Назад в главное меню
     @dp.callback_query(F.data == "back_main")
     async def cb_back_main(c: CallbackQuery):
         await c.message.answer("Главное меню:", reply_markup=main_menu)
         await c.answer()
 
+    # ============================
+    # Запуск бота
+    # ============================
     await dp.start_polling(bot)
 
 
