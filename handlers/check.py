@@ -18,7 +18,6 @@ def esc(text: str) -> str:
 @router.message(Command("check"))
 async def handle_check(message: types.Message):
     cfg = get_user_settings(message.from_user.id)
-
     symbols = cfg.get("symbols", ["BTC"])
 
     for symbol in symbols:
@@ -37,6 +36,7 @@ async def handle_check(message: types.Message):
         long_url = get_exchange_link(long_ex, symbol)
         short_url = get_exchange_link(short_ex, symbol)
 
+        # текст с гиперссылками внутри Markdown
         text = (
             f"📊 *Арбитраж по {esc(symbol)}:*\n"
             f"🟢 Long: [{esc(long_ex)}]({long_url}) @ `{esc(str(long_price))}`\n"
@@ -44,4 +44,8 @@ async def handle_check(message: types.Message):
             f"💰 PnL: *{esc(str(pnl))}$*\n"
         )
 
-        await message.answer(text, parse_mode="MarkdownV2")
+        await message.answer(
+            text,
+            parse_mode="MarkdownV2",
+            disable_web_page_preview=True  # ← отключает картинки Telegram
+        )
