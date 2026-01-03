@@ -5,7 +5,7 @@ BASE_URL = "https://api.hyperliquid.xyz"
 async def get_price(symbol: str) -> float:
     """
     Получает цену через l2Book (стакан).
-    Hyperliquid возвращает список, поэтому data[0].
+    Работает с реальной структурой ответа Hyperliquid.
     """
 
     url = f"{BASE_URL}/info"
@@ -18,24 +18,28 @@ async def get_price(symbol: str) -> float:
         async with session.post(url, json=payload) as resp:
             data = await resp.json()
 
-    # Проверяем, что пришёл список
-    if not isinstance(data, list) or len(data) == 0:
+    # Проверяем, что пришёл словарь
+    if not isinstance(data, dict):
         raise ValueError(f"Unexpected response format: {data}")
 
-    # Берём первый элемент
-    item = data[0]
+    if "levels" not in data:
+        raise ValueError(f"No levels in response: {data}")
 
-    if "levels" not in item:
-        raise ValueError(f"No levels in response: {item}")
+    levels = data["levels"]
 
-    bids = item["levels"]["bids"]
-    asks = item["levels"]["asks"]
+    # levels = [bids, asks]
+    if len(levels) < 2:
+        raise ValueError(f"Invalid levels structure: {levels}")
+
+    bids = levels[0]
+    asks = levels[1]
 
     if not bids or not asks:
         raise ValueError(f"No orderbook data for {symbol}")
 
-    best_bid = float(bids[0][0])
-    best_ask = float(asks[0][0])
+    # bids и asks — это списки словарей {'px': '89990.0', ...}
+    best_bid = float(bids[0]["px"])
+    best_ask = float(asks[0]["px"])
 
     # Возвращаем среднюю цену
     return (best_bid + best_ask) / 2
