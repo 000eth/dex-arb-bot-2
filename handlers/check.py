@@ -5,7 +5,6 @@ from logic.auto_monitor import get_user_settings
 
 router = Router()
 
-
 # Экранируем MarkdownV2
 def esc(text: str) -> str:
     chars = r"\_*[]()~`>#+-=|{}.!"
