@@ -3,21 +3,17 @@ from logic.exchange_links import get_exchange_link
 from logic.auto_monitor import get_user_settings
 from logic.arbitrage import check_arbitrage
 
-
-# Экранирование для MarkdownV2
+# Экранируем MarkdownV2
 def esc(text: str) -> str:
     chars = r"\_*[]()~`>#+-=|{}.!"
     for ch in chars:
         text = text.replace(ch, f"\\{ch}")
     return text
 
-
 @router.message(commands=["check"])
 async def handle_check(message: types.Message):
     cfg = get_user_settings(message.from_user.id)
-
-    # Если монеты не заданы — ставим ETH по умолчанию
-    symbols = cfg.get("symbols", ["ETH"])
+    symbols = cfg.get("symbols", ["BTC"])  # по умолчанию BTC
 
     for symbol in symbols:
         result = await check_arbitrage(symbol)
@@ -36,7 +32,7 @@ async def handle_check(message: types.Message):
         long_url = get_exchange_link(long_ex, symbol)
         short_url = get_exchange_link(short_ex, symbol)
 
-        # текст с кликабельными биржами
+        # текст с гиперссылками
         text = (
             f"📊 *Арбитраж по {esc(symbol)}:*\n"
             f"🟢 Long: [{esc(long_ex)}]({long_url}) @ `{esc(str(long_price))}`\n"
