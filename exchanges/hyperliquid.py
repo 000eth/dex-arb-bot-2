@@ -5,7 +5,7 @@ BASE_URL = "https://api.hyperliquid.xyz"
 async def get_price(symbol: str) -> float:
     """
     Получает цену через l2Book (стакан).
-    Работает для всех активов Hyperliquid.
+    Hyperliquid возвращает список, поэтому data[0].
     """
 
     url = f"{BASE_URL}/info"
@@ -18,12 +18,18 @@ async def get_price(symbol: str) -> float:
         async with session.post(url, json=payload) as resp:
             data = await resp.json()
 
-    # Проверяем структуру ответа
-    if "levels" not in data:
-        raise ValueError(f"Unexpected response: {data}")
+    # Проверяем, что пришёл список
+    if not isinstance(data, list) or len(data) == 0:
+        raise ValueError(f"Unexpected response format: {data}")
 
-    bids = data["levels"]["bids"]
-    asks = data["levels"]["asks"]
+    # Берём первый элемент
+    item = data[0]
+
+    if "levels" not in item:
+        raise ValueError(f"No levels in response: {item}")
+
+    bids = item["levels"]["bids"]
+    asks = item["levels"]["asks"]
 
     if not bids or not asks:
         raise ValueError(f"No orderbook data for {symbol}")
