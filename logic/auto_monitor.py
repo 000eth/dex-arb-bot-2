@@ -9,8 +9,8 @@ def get_user_settings(uid):
             "enabled": False,
             "interval": 5,
             "min_pnl": 1,
-            "symbol": "BTC",
-            "last_pnl": None,
+            "symbols": ["BTC"],   # теперь список монет
+            "last_pnl": {},       # pnl по каждой монете
             "next_check": 0
         }
     return user_settings[uid]
@@ -30,27 +30,25 @@ async def auto_monitor_loop(bot):
 
             cfg["next_check"] = cfg["interval"]
 
-            result = await check_arbitrage(cfg["symbol"])
+            # Проверяем каждую монету
+            for symbol in cfg["symbols"]:
+                result = await check_arbitrage(symbol)
 
-            if "error" in result:
-                continue
+                if "error" in result:
+                    continue
 
-            pnl = result["pnl"]
+                pnl = result["pnl"]
 
-            if pnl < cfg["min_pnl"]:
-                continue
+                # Если профит меньше минимального — пропускаем
+                if pnl < cfg["min_pnl"]:
+                    continue
 
-            if cfg["last_pnl"] == pnl:
-                continue
+                # Если сигнал такой же — не спамим
+                if cfg["last_pnl"].get(symbol) == pnl:
+                    continue
 
-            cfg["last_pnl"] = pnl
+                cfg["last_pnl"][symbol] = pnl
 
-            text = (
-                f"📡 *Авто‑мониторинг*\n"
-                f"Монета: *{cfg['symbol']}*\n\n"
-                f"🟢 Long: *{result['long']}* @ `{result['long_price']}`\n"
-                f"🔴 Short: *{result['short']}* @ `{result['short_price']}`\n"
-                f"💰 PnL: *{pnl}$*\n"
-            )
-
-            await bot.send_message(uid, text, parse_mode="Markdown")
+                text = (
+                    f"📡 *Авто‑мониторинг*\n"
+                    f"Монета: *{symbol}*\n\n"
