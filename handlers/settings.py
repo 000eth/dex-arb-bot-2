@@ -1,5 +1,10 @@
 from aiogram import Router, types, F
-from keyboards import settings_menu, symbol_toggle_menu, interval_menu, min_pnl_menu
+from keyboards import (
+    settings_menu,
+    symbol_toggle_menu,
+    interval_menu,
+    min_pnl_menu
+)
 from logic.auto_monitor import get_user_settings
 
 router = Router()
@@ -28,12 +33,13 @@ async def cb_toggle_symbol(callback: types.CallbackQuery):
     symbol = callback.data.split("_")[1]
     cfg = get_user_settings(callback.from_user.id)
 
+    # Переключаем монету
     if symbol in cfg["symbols"]:
         cfg["symbols"].remove(symbol)
     else:
         cfg["symbols"].append(symbol)
 
-    # Обновляем меню без создания нового сообщения
+    # Обновляем клавиатуру (кнопки остаются на месте)
     await callback.message.edit_reply_markup(symbol_toggle_menu)
     await callback.answer(f"{symbol} переключён")
 
