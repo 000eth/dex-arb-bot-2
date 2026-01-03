@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(level=logging.INFO)
 import asyncio
 from contextlib import suppress
 from aiogram import Bot, Dispatcher
