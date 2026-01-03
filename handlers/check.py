@@ -1,3 +1,6 @@
+print("=== CHECK HANDLER LOADED ===")
+
+
 from aiogram import types, Router
 from logic.arbitrage import check_arbitrage
 from logic.exchange_links import get_exchange_link
