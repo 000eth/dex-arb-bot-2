@@ -1,30 +1,22 @@
-from aiogram import types, Router
-from logic.arbitrage import check_arbitrage
-from logic.exchange_links import get_exchange_link
-from logic.auto_monitor import get_user_settings
+# ============================
+# Команда /check
+# ============================
+@dp.message(Command("check"))
+async def check(m: Message):
+    cfg = get_user_settings(m.from_user.id)
 
-router = Router()
+    # Экранируем MarkdownV2
+    def esc(text: str) -> str:
+        chars = r"\_*[]()~`>#+-=|{}.!"
+        for ch in chars:
+            text = text.replace(ch, f"\\{ch}")
+        return text
 
-# Экранируем MarkdownV2
-def esc(text: str) -> str:
-    chars = r"\_*[]()~`>#+-=|{}.!"
-    for ch in chars:
-        text = text.replace(ch, f"\\{ch}")
-    return text
-
-
-@router.message(commands=["check"])
-async def handle_check(message: types.Message):
-    cfg = get_user_settings(message.from_user.id)
-
-    # Если монеты не заданы — ставим BTC по умолчанию
-    symbols = cfg.get("symbols", ["BTC"])
-
-    for symbol in symbols:
+    for symbol in cfg["symbols"]:
         result = await check_arbitrage(symbol)
 
         if "error" in result:
-            await message.answer(f"⚠️ Не удалось получить данные по {symbol}.")
+            await m.answer(f"⚠️ Ошибка по {symbol}: {result['error']}")
             continue
 
         long_ex = result["long"]
@@ -45,4 +37,4 @@ async def handle_check(message: types.Message):
             f"💰 PnL: *{esc(str(pnl))}$*\n"
         )
 
-        await message.answer(text, parse_mode="MarkdownV2")
+        await m.answer(text, parse_mode="MarkdownV2")
