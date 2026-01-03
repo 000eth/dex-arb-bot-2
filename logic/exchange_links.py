@@ -1,13 +1,24 @@
-def get_exchange_link(exchange: str, symbol: str) -> str:
-    symbol = symbol.upper()
+# logic/exchange_links.py
 
-    if exchange == "Hyperliquid":
+def get_exchange_link(exchange: str, symbol: str) -> str:
+    exchange = exchange.lower()
+
+    # === ТВОИ РЕФЕРАЛКИ ===
+    if exchange == "okx":
+        return "https://okx.com/join/9188608"
+
+    if exchange == "pacifica":
+        return "https://app.pacifica.fi?referral=leaderboard"
+
+    # === Дефолтные ссылки (если биржа без рефки) ===
+    if exchange == "hyperliquid":
         return f"https://app.hyperliquid.xyz/trade/{symbol}"
 
-    if exchange == "Binance":
+    if exchange == "binance":
         return f"https://www.binance.com/en/trade/{symbol}_USDT"
 
-    if exchange == "OKX":
-        return f"https://www.okx.com/trade-swap/{symbol}-USDT-SWAP"
+    if exchange == "nado":
+        return f"https://app.nado.xyz/trade/{symbol}"
 
-    return ""
+    # fallback
+    return "https://google.com"
