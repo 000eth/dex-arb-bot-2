@@ -1,45 +1,41 @@
 import aiohttp
+import logging
 
-BASE_URL = "https://api.hyperliquid.xyz"
+logger = logging.getLogger(__name__)
 
-async def get_price(symbol: str) -> float:
+BASE_URL = "https://api.hyperliquid.xyz/info"
+
+
+async def get_price(symbol: str):
     """
-    Получает цену через l2Book (стакан).
-    Работает с реальной структурой ответа Hyperliquid.
+    Получает mark price с Hyperliquid.
+    Hyperliquid возвращает ВСЕ монеты сразу, поэтому мы фильтруем нужную.
     """
 
-    url = f"{BASE_URL}/info"
-    payload = {
-        "type": "l2Book",
-        "coin": symbol.upper()
-    }
+    payload = {"type": "meta"}
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=payload) as resp:
-            data = await resp.json()
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(BASE_URL, json=payload, timeout=5) as resp:
+                data = await resp.json()
+    except Exception as e:
+        logger.warning(f"Hyperliquid request error: {e}")
+        return None
 
-    # Проверяем, что пришёл словарь
-    if not isinstance(data, dict):
-        raise ValueError(f"Unexpected response format: {data}")
+    # Проверяем формат ответа
+    if "universe" not in data:
+        logger.warning(f"Hyperliquid unexpected response: {data}")
+        return None
 
-    if "levels" not in data:
-        raise ValueError(f"No levels in response: {data}")
+    # Ищем монету в списке
+    for item in data["universe"]:
+        if item.get("name") == symbol:
+            try:
+                return float(item["markPx"])
+            except Exception as e:
+                logger.warning(f"Hyperliquid parse error for {symbol}: {e}")
+                return None
 
-    levels = data["levels"]
-
-    # levels = [bids, asks]
-    if len(levels) < 2:
-        raise ValueError(f"Invalid levels structure: {levels}")
-
-    bids = levels[0]
-    asks = levels[1]
-
-    if not bids or not asks:
-        raise ValueError(f"No orderbook data for {symbol}")
-
-    # bids и asks — это списки словарей {'px': '89990.0', ...}
-    best_bid = float(bids[0]["px"])
-    best_ask = float(asks[0]["px"])
-
-    # Возвращаем среднюю цену
-    return (best_bid + best_ask) / 2
+    # Монета не найдена
+    logger.warning(f"Hyperliquid: symbol {symbol} not found in universe")
+    return None
