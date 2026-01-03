@@ -1,16 +1,16 @@
 from aiogram import Router, types, F
 from keyboards import (
     settings_menu,
-    symbol_toggle_menu,
     interval_menu,
-    min_pnl_menu
+    min_pnl_menu,
+    build_symbol_menu
 )
 from logic.auto_monitor import get_user_settings
 
 router = Router()
 
 
-# === Открытие главного меню настроек ===
+# === Главное меню настроек ===
 @router.message(F.text == "Settings")
 async def settings_cmd(message: types.Message):
     await message.answer(
@@ -19,12 +19,15 @@ async def settings_cmd(message: types.Message):
     )
 
 
-# === Открытие меню выбора монет ===
+# === Меню выбора монет ===
 @router.callback_query(F.data == "set_symbols")
 async def cb_set_symbols(callback: types.CallbackQuery):
+    cfg = get_user_settings(callback.from_user.id)
+    menu = build_symbol_menu(cfg["symbols"])
+
     await callback.message.edit_text(
         "Выбери монеты для мониторинга:",
-        reply_markup=symbol_toggle_menu
+        reply_markup=menu
     )
     await callback.answer()
 
@@ -35,19 +38,23 @@ async def cb_toggle_symbol(callback: types.CallbackQuery):
     symbol = callback.data.split("_")[1]
     cfg = get_user_settings(callback.from_user.id)
 
+    # Переключаем монету
     if symbol in cfg["symbols"]:
         cfg["symbols"].remove(symbol)
     else:
         cfg["symbols"].append(symbol)
 
+    # Генерируем обновлённое меню
+    menu = build_symbol_menu(cfg["symbols"])
+
     await callback.message.edit_text(
         "Выбери монеты для мониторинга:",
-        reply_markup=symbol_toggle_menu
+        reply_markup=menu
     )
-    await callback.answer(f"{symbol} переключён")
+    await callback.answer()
 
 
-# === Открытие меню интервала ===
+# === Меню интервала ===
 @router.callback_query(F.data == "set_interval")
 async def cb_set_interval(callback: types.CallbackQuery):
     await callback.message.edit_text(
@@ -71,7 +78,7 @@ async def cb_interval(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# === Открытие меню минимального PnL ===
+# === Меню минимального PnL ===
 @router.callback_query(F.data == "set_min_pnl")
 async def cb_set_min_pnl(callback: types.CallbackQuery):
     await callback.message.edit_text(
