@@ -9,9 +9,10 @@ from aiogram.types import Message, CallbackQuery
 from config import settings
 from logic.arbitrage import check_arbitrage
 from logic.auto_monitor import auto_monitor_loop, get_user_settings
-from keyboards import main_menu, check_buttons
-
-BOT_SYMBOL = 'BTC'
+from keyboards import (
+    main_menu, check_buttons, settings_menu,
+    symbol_menu, interval_menu, min_pnl_menu
+)
 
 async def main():
     bot = Bot(settings.BOT_TOKEN)
@@ -21,14 +22,12 @@ async def main():
 
     @dp.message(Command('start'))
     async def start(m: Message):
-        await m.answer(
-            "Бот запущен. Выбирай действие:",
-            reply_markup=main_menu
-        )
+        await m.answer("Бот запущен. Выбирай действие:", reply_markup=main_menu)
 
     @dp.message(Command('check'))
     async def check(m: Message):
-        result = await check_arbitrage(BOT_SYMBOL)
+        cfg = get_user_settings(m.from_user.id)
+        result = await check_arbitrage(cfg["symbol"])
 
         if "error" in result:
             await m.answer(f"⚠️ Ошибка: {result['error']}")
@@ -36,18 +35,23 @@ async def main():
 
         text = (
             f"📊 *Арбитраж найден:*\n"
-            f"🟢 Long на *{result['long']}* @ `{result['long_price']}`\n"
-            f"🔴 Short на *{result['short']}* @ `{result['short_price']}`\n"
-            f"💰 Потенциальный PnL: *{result['pnl']}$*\n"
+            f"🟢 Long: *{result['long']}* @ `{result['long_price']}`\n"
+            f"🔴 Short: *{result['short']}* @ `{result['short_price']}`\n"
+            f"💰 PnL: *{result['pnl']}$*\n"
         )
 
         await m.answer(text, parse_mode="Markdown", reply_markup=check_buttons)
 
-    # === INLINE BUTTON HANDLERS ===
+    @dp.message(Command('settings'))
+    async def settings_cmd(m: Message):
+        await m.answer("⚙ Настройки:", reply_markup=settings_menu)
+
+    # === INLINE CALLBACKS ===
 
     @dp.callback_query(F.data == "check_again")
     async def cb_check_again(c: CallbackQuery):
-        result = await check_arbitrage(BOT_SYMBOL)
+        cfg = get_user_settings(c.from_user.id)
+        result = await check_arbitrage(cfg["symbol"])
 
         if "error" in result:
             await c.message.answer(f"⚠️ Ошибка: {result['error']}")
@@ -55,8 +59,8 @@ async def main():
 
         text = (
             f"📊 *Арбитраж найден:*\n"
-            f"🟢 Long на *{result['long']}* @ `{result['long_price']}`\n"
-            f"🔴 Short на *{result['short']}* @ `{result['short_price']}`\n"
+            f"🟢 Long: *{result['long']}* @ `{result['long_price']}`\n"
+            f"🔴 Short: *{result['short']}* @ `{result['short_price']}`\n"
             f"💰 PnL: *{result['pnl']}$*\n"
         )
 
@@ -77,7 +81,57 @@ async def main():
         await c.message.answer("🔴 Авто‑мониторинг выключен.")
         await c.answer()
 
+    @dp.callback_query(F.data == "open_settings")
+    async def cb_open_settings(c: CallbackQuery):
+        await c.message.answer("⚙ Настройки:", reply_markup=settings_menu)
+        await c.answer()
+
+    @dp.callback_query(F.data == "set_symbol")
+    async def cb_set_symbol(c: CallbackQuery):
+        await c.message.answer("Выбери монету:", reply_markup=symbol_menu)
+        await c.answer()
+
+    @dp.callback_query(F.data.startswith("symbol_"))
+    async def cb_symbol(c: CallbackQuery):
+        symbol = c.data.split("_")[1]
+        cfg = get_user_settings(c.from_user.id)
+        cfg["symbol"] = symbol
+        await c.message.answer(f"Монета установлена: {symbol}")
+        await c.answer()
+
+    @dp.callback_query(F.data == "set_interval")
+    async def cb_set_interval(c: CallbackQuery):
+        await c.message.answer("Выбери интервал:", reply_markup=interval_menu)
+        await c.answer()
+
+    @dp.callback_query(F.data.startswith("interval_"))
+    async def cb_interval(c: CallbackQuery):
+        interval = int(c.data.split("_")[1])
+        cfg = get_user_settings(c.from_user.id)
+        cfg["interval"] = interval
+        await c.message.answer(f"Интервал установлен: {interval} сек")
+        await c.answer()
+
+    @dp.callback_query(F.data == "set_min_pnl")
+    async def cb_set_min_pnl(c: CallbackQuery):
+        await c.message.answer("Выбери минимальный PnL:", reply_markup=min_pnl_menu)
+        await c.answer()
+
+    @dp.callback_query(F.data.startswith("pnl_"))
+    async def cb_pnl(c: CallbackQuery):
+        pnl = int(c.data.split("_")[1])
+        cfg = get_user_settings(c.from_user.id)
+        cfg["min_pnl"] = pnl
+        await c.message.answer(f"Минимальный PnL установлен: {pnl}$")
+        await c.answer()
+
+    @dp.callback_query(F.data == "back_main")
+    async def cb_back_main(c: CallbackQuery):
+        await c.message.answer("Главное меню:", reply_markup=main_menu)
+        await c.answer()
+
     await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
     asyncio.run(main())
