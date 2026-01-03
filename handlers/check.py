@@ -1,22 +1,31 @@
-# ============================
-# Команда /check
-# ============================
-@dp.message(Command("check"))
-async def check(m: Message):
-    cfg = get_user_settings(m.from_user.id)
+from aiogram import Router, types
+from aiogram.filters import Command
 
-    # Экранируем MarkdownV2
-    def esc(text: str) -> str:
-        chars = r"\_*[]()~`>#+-=|{}.!"
-        for ch in chars:
-            text = text.replace(ch, f"\\{ch}")
-        return text
+from logic.arbitrage import check_arbitrage
+from logic.exchange_links import get_exchange_link
+from logic.auto_monitor import get_user_settings
 
-    for symbol in cfg["symbols"]:
+router = Router()
+
+# Экранируем MarkdownV2
+def esc(text: str) -> str:
+    chars = r"\_*[]()~`>#+-=|{}.!"
+    for ch in chars:
+        text = text.replace(ch, f"\\{ch}")
+    return text
+
+
+@router.message(Command("check"))
+async def handle_check(message: types.Message):
+    cfg = get_user_settings(message.from_user.id)
+
+    symbols = cfg.get("symbols", ["BTC"])
+
+    for symbol in symbols:
         result = await check_arbitrage(symbol)
 
         if "error" in result:
-            await m.answer(f"⚠️ Ошибка по {symbol}: {result['error']}")
+            await message.answer(f"⚠️ Ошибка по {symbol}: {result['error']}")
             continue
 
         long_ex = result["long"]
@@ -25,11 +34,9 @@ async def check(m: Message):
         short_price = result["short_price"]
         pnl = result["pnl"]
 
-        # ссылки
         long_url = get_exchange_link(long_ex, symbol)
         short_url = get_exchange_link(short_ex, symbol)
 
-        # текст с гиперссылками
         text = (
             f"📊 *Арбитраж по {esc(symbol)}:*\n"
             f"🟢 Long: [{esc(long_ex)}]({long_url}) @ `{esc(str(long_price))}`\n"
@@ -37,4 +44,4 @@ async def check(m: Message):
             f"💰 PnL: *{esc(str(pnl))}$*\n"
         )
 
-        await m.answer(text, parse_mode="MarkdownV2")
+        await message.answer(text, parse_mode="MarkdownV2")
