@@ -3,16 +3,9 @@ from exchanges.binance import get_price as binance_price
 from exchanges.okx import get_price as okx_price
 
 import logging
-
 logger = logging.getLogger(__name__)
 
-async def check_arbitrage(symbol: str):
-    """
-    Проверяет арбитраж между Hyperliquid, Binance и OKX.
-    Возвращает словарь с результатами.
-    """
-
-    # --- Получаем цены с бирж ---
+async def check_arbitrage(symbol: str = "ETH"):
     try:
         hl = await hl_price(symbol)
     except Exception as e:
@@ -31,30 +24,27 @@ async def check_arbitrage(symbol: str):
         okx = None
         logger.warning(f"OKX error: {e}")
 
-    # --- Собираем цены ---
     prices = {
-        "hyperliquid": hl,
-        "binance": binance,
-        "okx": okx,
+        "Hyperliquid": hl,
+        "Binance": binance,
+        "OKX": okx
     }
 
-    # Убираем биржи, где нет цены
     clean = {ex: p for ex, p in prices.items() if p is not None}
-
     if len(clean) < 2:
         return {"error": "Недостаточно данных для арбитража"}
 
-    # --- Ищем лучший и худший курс ---
-    best_ex = max(clean, key=clean.get)
-    worst_ex = min(clean, key=clean.get)
+    long_ex = min(clean, key=clean.get)
+    short_ex = max(clean, key=clean.get)
 
-    spread = clean[best_ex] - clean[worst_ex]
+    long_price = clean[long_ex]
+    short_price = clean[short_ex]
+    pnl = round(short_price - long_price, 2)
 
     return {
-        "best_exchange": best_ex,
-        "best_price": clean[best_ex],
-        "worst_exchange": worst_ex,
-        "worst_price": clean[worst_ex],
-        "spread": spread,
-        "all_prices": clean
+        "long": long_ex,
+        "short": short_ex,
+        "long_price": long_price,
+        "short_price": short_price,
+        "pnl": pnl
     }
