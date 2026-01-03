@@ -9,8 +9,8 @@ def get_user_settings(uid):
             "enabled": False,
             "interval": 5,
             "min_pnl": 1,
-            "symbols": ["BTC"],   # список монет
-            "last_pnl": {},       # pnl по каждой монете
+            "symbols": ["BTC"],
+            "last_pnl": {},
             "next_check": 0
         }
     return user_settings[uid]
@@ -24,10 +24,16 @@ async def auto_monitor_loop(bot):
             if not cfg["enabled"]:
                 continue
 
+            # Если интервал изменился — сбрасываем таймер
+            if cfg["next_check"] > cfg["interval"]:
+                cfg["next_check"] = cfg["interval"]
+
             cfg["next_check"] -= 1
+
             if cfg["next_check"] > 0:
                 continue
 
+            # Сразу ставим новый интервал
             cfg["next_check"] = cfg["interval"]
 
             # Проверяем каждую монету
