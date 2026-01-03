@@ -1,6 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from logic.exchange_links import get_exchange_link
-
 
 @router.message(commands=["check"])
 async def handle_check(message: types.Message):
@@ -16,33 +14,19 @@ async def handle_check(message: types.Message):
     short_price = result["short_price"]
     pnl = result["pnl"]
 
+    # ссылки
+    long_url = get_exchange_link(long_ex, "ETH")
+    short_url = get_exchange_link(short_ex, "ETH")
+
+    # Экранируем MarkdownV2
+    def esc(t: str) -> str:
+        return t.replace("-", "\\-").replace(".", "\\.").replace("_", "\\_")
+
     text = (
         f"📊 *Арбитраж по ETH:*\n"
-        f"🟢 Long: *{long_ex}* @ `{long_price}`\n"
-        f"🔴 Short: *{short_ex}* @ `{short_price}`\n"
+        f"🟢 Long: [{esc(long_ex)}]({long_url}) @ `{long_price}`\n"
+        f"🔴 Short: [{esc(short_ex)}]({short_url}) @ `{short_price}`\n"
         f"💰 PnL: *{pnl}$*\n"
     )
 
-    # === Кнопки со ссылками ===
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=f"🟢 {long_ex}",
-                    url=get_exchange_link(long_ex, "ETH")
-                ),
-                InlineKeyboardButton(
-                    text=f"🔴 {short_ex}",
-                    url=get_exchange_link(short_ex, "ETH")
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🔄 Проверить снова",
-                    callback_data="check_again"
-                )
-            ]
-        ]
-    )
-
-    await message.answer(text, parse_mode="Markdown", reply_markup=kb)
+    await message.answer(text, parse_mode="MarkdownV2")
