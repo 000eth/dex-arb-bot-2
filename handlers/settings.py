@@ -1,65 +1,80 @@
-from aiogram import Router, types
-from aiogram.filters import Command
-
+from aiogram import Router, types, F
 from keyboards import settings_menu, symbol_toggle_menu, interval_menu, min_pnl_menu
 from logic.auto_monitor import get_user_settings
 
 router = Router()
 
 
-@router.message(Command("settings"))
+# === Открытие главного меню настроек ===
+@router.message(F.text == "Settings")
 async def settings_cmd(message: types.Message):
-    await message.answer("⚙ Настройки:", reply_markup=settings_menu)
+    await message.answer(
+        "⚙ Настройки:",
+        reply_markup=settings_menu
+    )
 
 
-# === CALLBACKS ===
+# === Открытие меню выбора монет ===
+@router.callback_query(F.data == "set_symbols")
+async def cb_set_symbols(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "Выбери монеты для мониторинга:"
+    )
+    await callback.message.edit_reply_markup(symbol_toggle_menu)
+    await callback.answer()
 
-@router.callback_query(lambda c: c.data == "set_symbols")
-async def cb_set_symbols(c: types.CallbackQuery):
-    await c.message.answer("Выбери монеты для мониторинга:", reply_markup=symbol_toggle_menu)
-    await c.answer()
 
-
-@router.callback_query(lambda c: c.data.startswith("toggle_"))
-async def cb_toggle_symbol(c: types.CallbackQuery):
-    symbol = c.data.split("_")[1]
-    cfg = get_user_settings(c.from_user.id)
+# === Переключение монеты ===
+@router.callback_query(F.data.startswith("toggle_"))
+async def cb_toggle_symbol(callback: types.CallbackQuery):
+    symbol = callback.data.split("_")[1]
+    cfg = get_user_settings(callback.from_user.id)
 
     if symbol in cfg["symbols"]:
         cfg["symbols"].remove(symbol)
-        await c.message.answer(f"❌ {symbol} отключён")
     else:
         cfg["symbols"].append(symbol)
-        await c.message.answer(f"✅ {symbol} включён")
 
-    await c.answer()
-
-
-@router.callback_query(lambda c: c.data == "set_interval")
-async def cb_set_interval(c: types.CallbackQuery):
-    await c.message.answer("Выбери интервал:", reply_markup=interval_menu)
-    await c.answer()
+    # Обновляем меню без отправки нового сообщения
+    await callback.message.edit_reply_markup(symbol_toggle_menu)
+    await callback.answer(f"{symbol} переключён")
 
 
-@router.callback_query(lambda c: c.data.startswith("interval_"))
-async def cb_interval(c: types.CallbackQuery):
-    interval = int(c.data.split("_")[1])
-    cfg = get_user_settings(c.from_user.id)
+# === Открытие меню интервала ===
+@router.callback_query(F.data == "set_interval")
+async def cb_set_interval(callback: types.CallbackQuery):
+    await callback.message.edit_text("Выбери интервал:")
+    await callback.message.edit_reply_markup(interval_menu)
+    await callback.answer()
+
+
+# === Установка интервала ===
+@router.callback_query(F.data.startswith("interval_"))
+async def cb_interval(callback: types.CallbackQuery):
+    interval = int(callback.data.split("_")[1])
+    cfg = get_user_settings(callback.from_user.id)
     cfg["interval"] = interval
-    await c.message.answer(f"Интервал установлен: {interval} сек")
-    await c.answer()
+
+    await callback.message.edit_text(f"Интервал установлен: {interval} сек")
+    await callback.message.edit_reply_markup(settings_menu)
+    await callback.answer()
 
 
-@router.callback_query(lambda c: c.data == "set_min_pnl")
-async def cb_set_min_pnl(c: types.CallbackQuery):
-    await c.message.answer("Выбери минимальный PnL:", reply_markup=min_pnl_menu)
-    await c.answer()
+# === Открытие меню минимального PnL ===
+@router.callback_query(F.data == "set_min_pnl")
+async def cb_set_min_pnl(callback: types.CallbackQuery):
+    await callback.message.edit_text("Выбери минимальный PnL:")
+    await callback.message.edit_reply_markup(min_pnl_menu)
+    await callback.answer()
 
 
-@router.callback_query(lambda c: c.data.startswith("pnl_"))
-async def cb_pnl(c: types.CallbackQuery):
-    pnl = int(c.data.split("_")[1])
-    cfg = get_user_settings(c.from_user.id)
+# === Установка минимального PnL ===
+@router.callback_query(F.data.startswith("pnl_"))
+async def cb_pnl(callback: types.CallbackQuery):
+    pnl = int(callback.data.split("_")[1])
+    cfg = get_user_settings(callback.from_user.id)
     cfg["min_pnl"] = pnl
-    await c.message.answer(f"Минимальный PnL установлен: {pnl}$")
-    await c.answer()
+
+    await callback.message.edit_text(f"Минимальный PnL установлен: {pnl}$")
+    await callback.message.edit_reply_markup(settings_menu)
+    await callback.answer()
