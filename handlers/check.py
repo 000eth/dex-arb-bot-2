@@ -1,4 +1,4 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
 
 from logic.arbitrage import check_arbitrage
@@ -6,6 +6,7 @@ from logic.exchange_links import get_exchange_link
 from logic.auto_monitor import get_user_settings
 
 router = Router()
+
 
 # Экранируем MarkdownV2
 def esc(text: str) -> str:
@@ -15,7 +16,9 @@ def esc(text: str) -> str:
     return text
 
 
+# Обрабатываем и /check, и кнопку "Check"
 @router.message(Command("check"))
+@router.message(F.text == "Check")
 async def handle_check(message: types.Message):
     cfg = get_user_settings(message.from_user.id)
     symbols = cfg.get("symbols", ["BTC"])
