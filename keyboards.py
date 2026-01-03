@@ -18,6 +18,7 @@ settings_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Монеты", callback_data="set_symbols")],
     [InlineKeyboardButton(text="Интервал", callback_data="set_interval")],
     [InlineKeyboardButton(text="Минимальный PnL", callback_data="set_min_pnl")],
+    [InlineKeyboardButton(text="Авто‑мониторинг", callback_data="toggle_auto")],
 ])
 
 
