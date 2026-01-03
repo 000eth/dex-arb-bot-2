@@ -1,13 +1,23 @@
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# Главное меню настроек
+# === ГЛАВНОЕ МЕНЮ (кнопки без слешей) ===
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Check")],
+        [KeyboardButton(text="Settings")]
+    ],
+    resize_keyboard=True
+)
+
+# === МЕНЮ НАСТРОЕК ===
 settings_menu = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Монеты", callback_data="set_symbols")],
     [InlineKeyboardButton(text="Интервал", callback_data="set_interval")],
     [InlineKeyboardButton(text="Минимальный PnL", callback_data="set_min_pnl")],
 ])
 
-# Меню выбора монет
+# === МЕНЮ ВЫБОРА МОНЕТ ===
 symbol_toggle_menu = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton(text="BTC", callback_data="toggle_BTC"),
@@ -19,7 +29,7 @@ symbol_toggle_menu = InlineKeyboardMarkup(inline_keyboard=[
     ]
 ])
 
-# Меню интервалов
+# === МЕНЮ ИНТЕРВАЛОВ ===
 interval_menu = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton(text="5 сек", callback_data="interval_5"),
@@ -31,7 +41,7 @@ interval_menu = InlineKeyboardMarkup(inline_keyboard=[
     ]
 ])
 
-# Меню минимального PnL
+# === МЕНЮ МИНИМАЛЬНОГО PnL ===
 min_pnl_menu = InlineKeyboardMarkup(inline_keyboard=[
     [
         InlineKeyboardButton(text="1$", callback_data="pnl_1"),
