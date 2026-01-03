@@ -9,8 +9,8 @@ def get_user_settings(uid):
             "enabled": False,
             "interval": 5,
             "min_pnl": 1,
-            "symbols": ["BTC"],   # теперь список монет
-            "last_pnl": {},       # pnl по каждой монете
+            "symbols": ["BTC"],
+            "last_pnl": {},
             "next_check": 0
         }
     return user_settings[uid]
@@ -39,11 +39,9 @@ async def auto_monitor_loop(bot):
 
                 pnl = result["pnl"]
 
-                # Если профит меньше минимального — пропускаем
                 if pnl < cfg["min_pnl"]:
                     continue
 
-                # Если сигнал такой же — не спамим
                 if cfg["last_pnl"].get(symbol) == pnl:
                     continue
 
@@ -52,3 +50,9 @@ async def auto_monitor_loop(bot):
                 text = (
                     f"📡 *Авто‑мониторинг*\n"
                     f"Монета: *{symbol}*\n\n"
+                    f"🟢 Long: *{result['long']}* @ `{result['long_price']}`\n"
+                    f"🔴 Short: *{result['short']}* @ `{result['short_price']}`\n"
+                    f"💰 PnL: *{pnl}$*\n"
+                )
+
+                await bot.send_message(uid, text, parse_mode="Markdown")
