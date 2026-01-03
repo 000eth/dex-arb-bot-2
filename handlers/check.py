@@ -15,7 +15,7 @@ async def handle_check(message: types.Message):
     print("=== HANDLE_CHECK FROM HANDLERS/CHECK.PY ===")
 
     text = (
-        f"🔍 Арбитраж найден:*\n"
+        f"🔍 ТЕСТОВЫЙ ВЫВОД — ЭТО НОВЫЙ КОД"
         f"📈 Long на *{long_ex}* @ {long_price}\n"
         f"📉 Short на *{short_ex}* @ {short_price}\n"
         f"💰 Потенциальный PnL: *${pnl}*\n\n"
