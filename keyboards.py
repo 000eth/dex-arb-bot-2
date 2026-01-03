@@ -66,3 +66,16 @@ min_pnl_menu = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")]
     ]
 )
+symbol_toggle_menu = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="BTC", callback_data="toggle_BTC"),
+            InlineKeyboardButton(text="ETH", callback_data="toggle_ETH"),
+            InlineKeyboardButton(text="SOL", callback_data="toggle_SOL"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅ Назад", callback_data="open_settings")
+        ]
+    ]
+)
+
