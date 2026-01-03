@@ -1,40 +1,41 @@
 import asyncio
+import time
 from logic.arbitrage import check_arbitrage
 
-user_settings = {}
+# Храним настройки по пользователям
+user_settings: dict[int, dict] = {}
 
-def get_user_settings(uid):
+
+def get_user_settings(uid: int) -> dict:
     if uid not in user_settings:
         user_settings[uid] = {
-            "enabled": False,
-            "interval": 5,
+            "enabled": False,     # авто-мониторинг выключен по умолчанию
+            "interval": 5,        # интервал в секундах
             "min_pnl": 1,
             "symbols": ["BTC"],
-            "last_pnl": {},
-            "next_check": 0
+            "last_pnl": {},       # pnl по каждой монете
+            "last_check_ts": 0.0  # время последней проверки
         }
     return user_settings[uid]
 
 
 async def auto_monitor_loop(bot):
     while True:
-        await asyncio.sleep(1)
+        now = time.time()
 
         for uid, cfg in user_settings.items():
             if not cfg["enabled"]:
                 continue
 
-            # Если интервал изменился — сбрасываем таймер
-            if cfg["next_check"] > cfg["interval"]:
-                cfg["next_check"] = cfg["interval"]
+            interval = cfg.get("interval", 5)
+            last_check_ts = cfg.get("last_check_ts", 0.0)
 
-            cfg["next_check"] -= 1
-
-            if cfg["next_check"] > 0:
+            # Если ещё не прошло interval секунд — ждём
+            if now - last_check_ts < interval:
                 continue
 
-            # Сразу ставим новый интервал
-            cfg["next_check"] = cfg["interval"]
+            # Фиксируем время проверки сразу
+            cfg["last_check_ts"] = now
 
             # Проверяем каждую монету
             for symbol in cfg["symbols"]:
@@ -45,9 +46,11 @@ async def auto_monitor_loop(bot):
 
                 pnl = result["pnl"]
 
+                # Фильтр по min_pnl
                 if pnl < cfg["min_pnl"]:
                     continue
 
+                # Не спамим одинаковыми значениями
                 if cfg["last_pnl"].get(symbol) == pnl:
                     continue
 
@@ -62,3 +65,6 @@ async def auto_monitor_loop(bot):
                 )
 
                 await bot.send_message(uid, text, parse_mode="Markdown")
+
+        # Глобальный тик цикла
+        await asyncio.sleep(1)
