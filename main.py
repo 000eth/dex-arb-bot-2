@@ -1,5 +1,3 @@
-print("=== BOT STARTED ===")
-
 import logging
 logging.basicConfig(level=logging.INFO)
 
@@ -9,10 +7,9 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from config import settings
-from logic.arbitrage import check_arbitrage  # наш новый арбитраж
+from logic.arbitrage import check_arbitrage
 
-BOT_SYMBOL = 'ETH'  # можно сменить на SOL, если хочешь
-
+BOT_SYMBOL = 'BTC'  # можно сменить на ETH, SOL и т.д.
 
 async def main():
     bot = Bot(settings.BOT_TOKEN)
@@ -27,7 +24,7 @@ async def main():
         result = await check_arbitrage(BOT_SYMBOL)
 
         if "error" in result:
-            await m.answer("⚠️ Не удалось получить данные с бирж.")
+            await m.answer(f"⚠️ Ошибка: {result['error']}")
             return
 
         long_ex = result["long"]
@@ -47,7 +44,6 @@ async def main():
         await m.answer(text, parse_mode="Markdown")
 
     await dp.start_polling(bot)
-
 
 if __name__ == '__main__':
     asyncio.run(main())
