@@ -14,10 +14,6 @@ def esc(text: str) -> str:
         text = text.replace(ch, f"\\{ch}")
     return text
 
-# Ломаем Telegram-превью, но ссылка остаётся рабочей
-def hide_preview(url: str) -> str:
-    return url.replace("https://", "https://\u2060")
-
 
 @router.message(Command("check"))
 async def handle_check(message: types.Message):
@@ -37,11 +33,9 @@ async def handle_check(message: types.Message):
         short_price = result["short_price"]
         pnl = result["pnl"]
 
-        # ссылки с отключённым превью
-        long_url = hide_preview(get_exchange_link(long_ex, symbol))
-        short_url = hide_preview(get_exchange_link(short_ex, symbol))
+        long_url = get_exchange_link(long_ex, symbol)
+        short_url = get_exchange_link(short_ex, symbol)
 
-        # текст с гиперссылками
         text = (
             f"📊 *Арбитраж по {esc(symbol)}:*\n"
             f"🟢 Long: [{esc(long_ex)}]({long_url}) @ `{esc(str(long_price))}`\n"
