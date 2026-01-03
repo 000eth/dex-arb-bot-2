@@ -1,8 +1,3 @@
-from aiogram import Router, types
-from logic.arbitrage import check_arbitrage
-
-router = Router()
-
 @router.message(commands=["check"])
 async def handle_check(message: types.Message):
     result = await check_arbitrage("ETH")
@@ -17,12 +12,14 @@ async def handle_check(message: types.Message):
     short_price = result["short_price"]
     pnl = result["pnl"]
 
+    print("=== HANDLE_CHECK FROM HANDLERS/CHECK.PY ===")
+
     text = (
-        f"📊 *Арбитраж найден:*\n"
-        f"🟢 Long на *{long_ex}* @ `{long_price}`\n"
-        f"🔴 Short на *{short_ex}* @ `{short_price}`\n"
-        f"💰 Потенциальный PnL: *{pnl}$*\n\n"
-        f"_Используй /auto_on для авто‑мониторинга_"
+        f"🔍 Арбитраж найден:*\n"
+        f"📈 Long на *{long_ex}* @ {long_price}\n"
+        f"📉 Short на *{short_ex}* @ {short_price}\n"
+        f"💰 Потенциальный PnL: *${pnl}*\n\n"
+        f"_Используй /auto для авто-мониторинга_"
     )
 
     await message.answer(text, parse_mode="Markdown")
