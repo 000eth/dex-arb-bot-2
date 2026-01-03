@@ -6,6 +6,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 async def check_arbitrage(symbol: str = "ETH"):
+    """
+    Проверяет арбитраж между Hyperliquid, Binance и OKX.
+    Возвращает словарь с результатами.
+    """
+
+    # --- Получаем цены с бирж ---
     try:
         hl = await hl_price(symbol)
     except Exception as e:
@@ -24,16 +30,20 @@ async def check_arbitrage(symbol: str = "ETH"):
         okx = None
         logger.warning(f"OKX error: {e}")
 
+    # --- Собираем цены ---
     prices = {
         "Hyperliquid": hl,
         "Binance": binance,
         "OKX": okx
     }
 
+    # Убираем биржи, где нет цены
     clean = {ex: p for ex, p in prices.items() if p is not None}
+
     if len(clean) < 2:
         return {"error": "Недостаточно данных для арбитража"}
 
+    # --- Ищем лучший и худший курс ---
     long_ex = min(clean, key=clean.get)
     short_ex = max(clean, key=clean.get)
 
@@ -46,5 +56,6 @@ async def check_arbitrage(symbol: str = "ETH"):
         "short": short_ex,
         "long_price": long_price,
         "short_price": short_price,
-        "pnl": pnl
+        "pnl": pnl,
+        "all_prices": clean
     }
