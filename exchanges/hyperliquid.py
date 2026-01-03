@@ -9,7 +9,7 @@ BASE_URL = "https://api.hyperliquid.xyz/info"
 async def get_price(symbol: str):
     """
     Получает mark price с Hyperliquid.
-    Hyperliquid возвращает ВСЕ монеты сразу, поэтому мы фильтруем нужную.
+    Hyperliquid возвращает ВСЕ монеты сразу, мы ищем нужную.
     """
 
     payload = {"type": "meta"}
@@ -22,20 +22,24 @@ async def get_price(symbol: str):
         logger.warning(f"Hyperliquid request error: {e}")
         return None
 
-    # Проверяем формат ответа
-    if "universe" not in data:
-        logger.warning(f"Hyperliquid unexpected response: {data}")
+    # Проверяем наличие universe
+    universe = data.get("universe")
+    if not universe or not isinstance(universe, list):
+        logger.warning(f"Hyperliquid unexpected response format: {data}")
         return None
 
-    # Ищем монету в списке
-    for item in data["universe"]:
+    # Ищем нужную монету
+    for item in universe:
         if item.get("name") == symbol:
+            mark_px = item.get("markPx")
+            if mark_px is None:
+                logger.warning(f"Hyperliquid: markPx missing for {symbol}")
+                return None
             try:
-                return float(item["markPx"])
+                return float(mark_px)
             except Exception as e:
                 logger.warning(f"Hyperliquid parse error for {symbol}: {e}")
                 return None
 
-    # Монета не найдена
     logger.warning(f"Hyperliquid: symbol {symbol} not found in universe")
     return None
